@@ -1,252 +1,68 @@
-import { ChevronDown, CircleAlert, CircleCheck, Info, ShieldAlert } from 'lucide-react'
-import { PATTERN_GENERATORS } from '../patterns/generators'
+import { ChevronDown, CircleAlert, CircleCheck } from 'lucide-react'
 import { PRINTER_PROFILES } from '../printers/profiles'
 import { useAppStore } from '../state/useAppStore'
-import type { FormParameters, PatternParameters, PrintSettings, Toolpath, ValidationResult } from '../types/domain'
+import type { FormParameters, PrintSettings, Toolpath, ValidationResult } from '../types/domain'
 
-interface RangeControlProps {
-  label: string
-  value: number
-  min: number
-  max: number
-  step?: number
-  unit?: string
-  onChange: (value: number) => void
-}
-
+interface RangeControlProps { label: string; value: number; min: number; max: number; step?: number; unit?: string; onChange: (value: number) => void }
 export function RangeControl({ label, value, min, max, step = 1, unit = '', onChange }: RangeControlProps) {
-  return (
-    <label className="range-control">
-      <span className="control-label">
-        <span>{label}</span>
-        <span className="value-readout">{Number(value.toFixed(step < 1 ? 2 : 0))}{unit}</span>
-      </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
-    </label>
-  )
+  return <label className="range-control"><span className="control-label"><span>{label}</span><span className="value-readout">{Number(value.toFixed(step < 1 ? 2 : 0))}{unit}</span></span><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>
 }
 
-function PanelHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
-  return (
-    <div className="panel-header">
-      <span>{eyebrow}</span>
-      <h2>{title}</h2>
-    </div>
-  )
-}
-
-export function LeftPanel() {
-  const projectName = useAppStore((state) => state.projectName)
-  const formType = useAppStore((state) => state.formType)
-  const params = useAppStore((state) => state.formParameters)
-  const setFormType = useAppStore((state) => state.setFormType)
-  const setParam = useAppStore((state) => state.setFormParameter)
-  const applyPreset = useAppStore((state) => state.applyPreset)
-
-  const update = (key: keyof FormParameters) => (value: number) => setParam(key, value)
-
-  return (
-    <aside className="side-panel left-panel">
-      <PanelHeader eyebrow="01 · Form engine" title="Design geometry" />
-
-      <section className="panel-section preset-section">
-        <div className="section-label">Project presets</div>
-        <div className="preset-grid">
-          <button className={`preset-card ${projectName === 'PLA Weave Calibration' ? 'active' : ''}`} onClick={() => applyPreset('weave-calibration')}>
-            <span className="preset-glyph spiral-glyph" />
-            <span>PLA Calibration</span>
-            <small>Ø50 / H20</small>
-          </button>
-          <button className={`preset-card ${projectName === 'Diagrid Vase 01' ? 'active' : ''}`} onClick={() => applyPreset('diagrid-vase')}>
-            <span className="preset-glyph diagrid-glyph" />
-            <span>Diagrid Vase</span>
-            <small>140 / 105 / 180</small>
-          </button>
-          <button className={`preset-card ${projectName === 'Twisted Tower' ? 'active' : ''}`} onClick={() => applyPreset('twisted-tower')}>
-            <span className="preset-glyph tower-glyph" />
-            <span>Twisted Tower</span>
-            <small>Lofted / 150°</small>
-          </button>
-          <button className={`preset-card ${projectName === 'Helical Shade' ? 'active' : ''}`} onClick={() => applyPreset('helical-lampshade')}>
-            <span className="preset-glyph spiral-glyph" />
-            <span>Helical Shade</span>
-            <small>Cross-lattice</small>
-          </button>
-        </div>
-      </section>
-
-      <section className="panel-section">
-        <label className="select-control">
-          <span className="section-label">Base form</span>
-          <span className="select-wrap">
-            <select value={formType} onChange={(event) => setFormType(event.target.value as typeof formType)}>
-              <option value="vase">Cylinder / Vase</option>
-              <option value="lofted-tower">Lofted Tower</option>
-            </select>
-            <ChevronDown size={14} />
-          </span>
-        </label>
-      </section>
-
-      <section className="panel-section parameter-stack">
-        <div className="section-heading-row">
-          <span className="section-label">Dimensions</span>
-          <span className="section-meta">millimeters</span>
-        </div>
-        <RangeControl label="Height" value={params.height} min={20} max={240} unit=" mm" onChange={update('height')} />
-        <RangeControl label="Bottom radius" value={params.bottomRadius} min={20} max={95} unit=" mm" onChange={update('bottomRadius')} />
-        <RangeControl label="Top radius" value={params.topRadius} min={18} max={95} unit=" mm" onChange={update('topRadius')} />
-        {formType === 'lofted-tower' && (
-          <>
-            <RangeControl label="Mid radius" value={params.loftMidRadius} min={20} max={100} unit=" mm" onChange={update('loftMidRadius')} />
-            <RangeControl label="X offset" value={params.loftOffsetX} min={-30} max={30} unit=" mm" onChange={update('loftOffsetX')} />
-            <RangeControl label="Y offset" value={params.loftOffsetY} min={-30} max={30} unit=" mm" onChange={update('loftOffsetY')} />
-          </>
-        )}
-      </section>
-
-      <section className="panel-section parameter-stack">
-        <div className="section-label">Shape modulation</div>
-        <RangeControl label="Twist" value={params.twist} min={-180} max={270} unit="°" onChange={update('twist')} />
-        <RangeControl label="Radial wave" value={params.radialDeformation} min={0} max={10} step={0.25} unit=" mm" onChange={update('radialDeformation')} />
-        <RangeControl label="Surface resolution" value={params.resolution} min={32} max={120} onChange={update('resolution')} />
-      </section>
-    </aside>
-  )
-}
-
-function IssueIcon({ severity }: { severity: 'info' | 'caution' | 'high' | 'block' }) {
-  if (severity === 'block' || severity === 'high') return <ShieldAlert size={15} />
-  if (severity === 'caution') return <CircleAlert size={15} />
-  return <Info size={15} />
-}
-
-export function RightPanel({ validation, toolpath }: { validation: ValidationResult; toolpath: Toolpath }) {
-  const patternType = useAppStore((state) => state.patternType)
-  const params = useAppStore((state) => state.patternParameters)
+export function DesignPanel({ validation, toolpath }: { validation: ValidationResult; toolpath: Toolpath }) {
+  const form = useAppStore((state) => state.formParameters)
   const print = useAppStore((state) => state.printSettings)
   const printerId = useAppStore((state) => state.printerId)
-  const researchMode = useAppStore((state) => state.researchMode)
-  const setPatternType = useAppStore((state) => state.setPatternType)
-  const setParam = useAppStore((state) => state.setPatternParameter)
+  const setForm = useAppStore((state) => state.setFormParameter)
   const setPrint = useAppStore((state) => state.setPrintSetting)
   const setPrinter = useAppStore((state) => state.setPrinterId)
-  const setResearchMode = useAppStore((state) => state.setResearchMode)
-
-  const updatePattern = (key: keyof PatternParameters) => (value: number) => setParam(key, value)
-  const updatePrint = (key: keyof PrintSettings) => (value: number) => setPrint(key, value)
+  const applyPreset = useAppStore((state) => state.applyPreset)
   const profile = PRINTER_PROFILES.find((item) => item.id === printerId)!
+  const f = (key: keyof FormParameters) => (value: number) => setForm(key, value)
+  const p = (key: keyof PrintSettings) => (value: number) => setPrint(key, value)
 
-  return (
-    <aside className="side-panel right-panel">
-      <PanelHeader eyebrow="02 · Construction engine" title="Ground-up weave" />
-
-      <section className="panel-section">
-        <div className="pattern-tabs" role="tablist" aria-label="Pattern selection">
-          {(Object.keys(PATTERN_GENERATORS) as Array<keyof typeof PATTERN_GENERATORS>).map((id) => (
-            <button
-              key={id}
-              className={patternType === id ? 'active' : ''}
-              onClick={() => setPatternType(id)}
-              title={PATTERN_GENERATORS[id].description}
-            >
-              {id === 'spiral-cross' ? 'Spiral' : PATTERN_GENERATORS[id].name}
-            </button>
-          ))}
-        </div>
-        <p className="pattern-description">{PATTERN_GENERATORS[patternType].description}</p>
-      </section>
-
-      <section className="panel-section parameter-stack">
-        <div className="section-heading-row">
-          <span className="section-label">Pattern field</span>
-          <span className="section-meta">UV → XYZ</span>
-        </div>
-        <RangeControl label="Cell width" value={params.cellWidth} min={6} max={36} step={0.5} unit=" mm" onChange={updatePattern('cellWidth')} />
-        <RangeControl label="Cell height" value={params.cellHeight} min={8} max={44} step={0.5} unit=" mm" onChange={updatePattern('cellHeight')} />
-        <RangeControl label="Rotation" value={params.rotation} min={-90} max={90} unit="°" onChange={updatePattern('rotation')} />
-        <RangeControl label="Phase" value={params.phase} min={0} max={360} unit="°" onChange={updatePattern('phase')} />
-      </section>
-
-      <section className="panel-section score-panel">
-        <div className="score-ring" style={{ '--score': `${validation.score * 3.6}deg` } as React.CSSProperties}>
-          <div><strong>{validation.score}</strong><span>/ 100</span></div>
-        </div>
-        <div className="score-copy">
-          <span className="section-label">Estimated printability</span>
-          <strong>{validation.isExportBlocked ? 'Blocked' : validation.score >= 90 ? 'Nominal' : 'Review'}</strong>
-          <small>Estimate only · calibration required</small>
-        </div>
-      </section>
-
-      <section className="panel-section issue-list">
-        {validation.issues.slice(0, 3).map((issue) => (
-          <div className={`issue issue-${issue.severity}`} key={issue.id} title={issue.detail}>
-            <IssueIcon severity={issue.severity} />
-            <span><strong>{issue.title}</strong><small>{issue.detail}</small></span>
-          </div>
-        ))}
-      </section>
-
-      <details className="panel-details" open>
-        <summary><span>Supported sinusoidal weave</span><ChevronDown size={14} /></summary>
-        <div className="details-content">
-          <RangeControl label="Base rings" value={print.baseRingCount} min={1} max={6} onChange={updatePrint('baseRingCount')} />
-          <RangeControl label="Wave amplitude" value={print.weaveAmplitude} min={0.12} max={1.2} step={0.01} unit=" mm" onChange={updatePrint('weaveAmplitude')} />
-          <RangeControl label="Wave wavelength" value={print.weaveWavelength} min={8} max={28} step={0.5} unit=" mm" onChange={updatePrint('weaveWavelength')} />
-          <RangeControl label="Joint speed" value={print.jointSpeed} min={8} max={22} unit=" mm/s" onChange={updatePrint('jointSpeed')} />
-          <RangeControl label="Vertical acceleration limit" value={print.verticalAccelerationLimit} min={30} max={140} step={5} unit=" mm/s²" onChange={updatePrint('verticalAccelerationLimit')} />
-        </div>
-      </details>
-
-      <details className="panel-details" open>
-        <summary><span>Print setup</span><ChevronDown size={14} /></summary>
-        <div className="details-content">
-          <label className="select-control">
-            <span className="section-label">Printer profile</span>
-            <span className="select-wrap">
-              <select value={printerId} onChange={(event) => setPrinter(event.target.value)}>
-                {PRINTER_PROFILES.map((item) => <option key={item.id} value={item.id}>{item.displayName}</option>)}
-              </select>
-              <ChevronDown size={14} />
-            </span>
-          </label>
-          <div className={`profile-status ${profile.requiresVerification ? 'warning' : 'ok'}`}>
-            {profile.requiresVerification ? <CircleAlert size={14} /> : <CircleCheck size={14} />}
-            <span>{profile.requiresVerification ? 'Profile requires verification' : 'Conservative profile ready'}</span>
-          </div>
-          <RangeControl label="Line width" value={print.lineWidth} min={0.3} max={0.8} step={0.01} unit=" mm" onChange={updatePrint('lineWidth')} />
-          <RangeControl label="Layer pitch" value={print.effectiveLayerHeight} min={0.12} max={0.32} step={0.01} unit=" mm" onChange={updatePrint('effectiveLayerHeight')} />
-          <RangeControl label="Maximum weave speed" value={print.extrusionSpeed} min={10} max={36} unit=" mm/s" onChange={updatePrint('extrusionSpeed')} />
-          <RangeControl label="Flow" value={print.flowMultiplier * 100} min={70} max={130} unit="%" onChange={(value) => updatePrint('flowMultiplier')(value / 100)} />
-          <RangeControl label="PLA nozzle" value={print.nozzleTemperature} min={190} max={220} unit=" °C" onChange={updatePrint('nozzleTemperature')} />
-          <RangeControl label="Cooling fan" value={print.fan} min={50} max={100} unit="%" onChange={updatePrint('fan')} />
-        </div>
-      </details>
-
-      <section className="panel-section compact-stats">
-        <div><span>Path length</span><strong>{(toolpath.totalLength / 1000).toFixed(2)} m</strong></div>
-        <div><span>Filament</span><strong>{toolpath.filamentLength.toFixed(0)} mm</strong></div>
-        <div><span>Build layers</span><strong>{toolpath.constructionLayerCount}</strong></div>
-        <div><span>Layer pitch</span><strong>{toolpath.layerPitch.toFixed(2)} mm</strong></div>
-        <div><span>Contact joints</span><strong>{toolpath.jointCount}</strong></div>
-        <div><span>Continuous paths</span><strong>{toolpath.continuousPathCount}</strong></div>
-        <div><span>Calculated speed</span><strong>{toolpath.recommendedSpeed.toFixed(1)} mm/s</strong></div>
-        <div><span>Maximum Z speed</span><strong>{toolpath.maxVerticalSpeed.toFixed(1)} mm/s</strong></div>
-      </section>
-
-      <label className="mode-switch">
-        <span><strong>Research mode</strong><small>Permit high-risk overrides</small></span>
-        <input type="checkbox" checked={researchMode} onChange={(event) => setResearchMode(event.target.checked)} />
-        <i />
-      </label>
-    </aside>
-  )
+  return <aside className="side-panel design-panel">
+    <div className="panel-header"><span>Veil laboratory</span><h2>Form + material flow</h2></div>
+    <section className="panel-section preset-strip">
+      <button onClick={() => applyPreset('weave-calibration')}>Calibration</button>
+      <button onClick={() => applyPreset('diagrid-vase')}>Veil vessel</button>
+      <button onClick={() => applyPreset('helical-lampshade')}>Tall veil</button>
+    </section>
+    <section className="panel-section parameter-stack">
+      <div className="section-heading-row"><span className="section-label">Form</span><span className="section-meta">mm</span></div>
+      <RangeControl label="Height" value={form.height} min={20} max={240} unit=" mm" onChange={f('height')} />
+      <RangeControl label="Bottom diameter" value={form.bottomRadius * 2} min={40} max={190} unit=" mm" onChange={(v) => f('bottomRadius')(v / 2)} />
+      <RangeControl label="Top diameter" value={form.topRadius * 2} min={36} max={190} unit=" mm" onChange={(v) => f('topRadius')(v / 2)} />
+      <RangeControl label="Form twist" value={form.twist} min={-90} max={180} unit="°" onChange={f('twist')} />
+    </section>
+    <section className="panel-section parameter-stack accent-section">
+      <div className="section-heading-row"><span className="section-label">Kink + span veil</span><span className="section-meta">continuous helix</span></div>
+      <RangeControl label="Anchor spacing" value={print.weaveWavelength} min={4.5} max={12} step={0.25} unit=" mm" onChange={p('weaveWavelength')} />
+      <RangeControl label="Kink depth" value={print.weaveAmplitude} min={0.15} max={1.8} step={0.05} unit=" mm" onChange={p('weaveAmplitude')} />
+      <RangeControl label="Spiral pitch" value={print.effectiveLayerHeight} min={0.42} max={1.4} step={0.02} unit=" mm/rev" onChange={p('effectiveLayerHeight')} />
+      <RangeControl label="Span flow" value={print.spanFlow * 100} min={65} max={100} unit="%" onChange={(v) => p('spanFlow')(v / 100)} />
+    </section>
+    <section className="panel-section parameter-stack">
+      <div className="section-heading-row"><span className="section-label">PLA motion</span><span className="section-meta">Ender-3 V3 Plus</span></div>
+      <RangeControl label="Span speed" value={print.extrusionSpeed} min={16} max={32} unit=" mm/s" onChange={p('extrusionSpeed')} />
+      <RangeControl label="Anchor speed" value={print.jointSpeed} min={8} max={20} unit=" mm/s" onChange={p('jointSpeed')} />
+      <RangeControl label="Nozzle" value={print.nozzleTemperature} min={195} max={215} unit=" °C" onChange={p('nozzleTemperature')} />
+      <RangeControl label="Cooling" value={print.fan} min={80} max={100} unit="%" onChange={p('fan')} />
+    </section>
+    <section className="panel-section veil-stats">
+      <div><strong>{toolpath.anchorCount}</strong><span>anchor ribs</span></div>
+      <div><strong>{toolpath.maximumSpan.toFixed(1)} mm</strong><span>actual span</span></div>
+      <div><strong>{toolpath.layerPitch.toFixed(2)} mm</strong><span>rise / revolution</span></div>
+      <div><strong>{toolpath.predictedSag.toFixed(2)} mm</strong><span>modeled sag</span></div>
+    </section>
+    <section className={`panel-section readiness ${validation.isExportBlocked ? 'blocked' : 'ready'}`}>
+      {validation.isExportBlocked ? <CircleAlert size={16} /> : <CircleCheck size={16} />}
+      <div><strong>{validation.isExportBlocked ? 'Export blocked' : 'Ready for calibration'}</strong><span>{validation.issues[0]?.detail}</span></div>
+    </section>
+    <details className="panel-details"><summary><span>Printer + advanced</span><ChevronDown size={14} /></summary><div className="details-content">
+      <label className="select-control"><span className="section-label">Printer</span><span className="select-wrap"><select value={printerId} onChange={(e) => setPrinter(e.target.value)}>{PRINTER_PROFILES.map((item) => <option key={item.id} value={item.id}>{item.displayName}</option>)}</select><ChevronDown size={14} /></span></label>
+      <div className={`profile-status ${profile.requiresVerification ? 'warning' : 'ok'}`}>{profile.requiresVerification ? <CircleAlert size={14} /> : <CircleCheck size={14} />}<span>{profile.requiresVerification ? 'Verify profile' : 'Creality macro profile ready'}</span></div>
+      <RangeControl label="Base rings" value={print.baseRingCount} min={2} max={6} onChange={p('baseRingCount')} />
+      <RangeControl label="Line width" value={print.lineWidth} min={0.38} max={0.55} step={0.01} unit=" mm" onChange={p('lineWidth')} />
+    </div></details>
+  </aside>
 }

@@ -64,21 +64,31 @@ function PatternLines({ curves }: { curves: MappedCurve[] }) {
   )
 }
 
-function ToolpathLines({ toolpath, analysis, extrusion }: { toolpath: Toolpath; analysis?: boolean; extrusion?: boolean }) {
+function ToolpathLines({ toolpath, predicted = false }: { toolpath: Toolpath; predicted?: boolean }) {
   return (
     <group>
       {toolpath.segments.map((segment) => (
         <Line
           key={segment.id}
-          points={segment.points.map((point) => [point.x, point.y, point.z] as [number, number, number])}
-          color={analysis ? SUPPORT_COLORS[segment.supportState] : extrusion ? '#f7a64b' : '#ffca72'}
-          lineWidth={extrusion ? 3.2 : 1.8}
+          points={segment.points.map((point) => [point.x, point.y, point.z - (predicted ? point.predictedSag : 0)] as [number, number, number])}
+          color={segment.family === 'continuous-base' ? '#70878c' : predicted ? '#e8edf0' : SUPPORT_COLORS[segment.supportState]}
+          lineWidth={predicted ? 1.05 : 0.75}
           transparent
           opacity={0.96}
         />
       ))}
     </group>
   )
+}
+
+function AnchorPoints({ toolpath, timeline = 1 }: { toolpath: Toolpath; timeline?: number }) {
+  const positions = useMemo(() => {
+    const extrusion = toolpath.orderedPoints.filter((point) => point.segmentType === 'extrusion')
+    const limit = Math.floor(extrusion.length * timeline)
+    const anchors = extrusion.slice(0, limit).filter((point) => point.materialPhase === 'anchor')
+    return new Float32Array(anchors.flatMap((point) => [point.x, point.y, point.z]))
+  }, [toolpath, timeline])
+  return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#f4f6f6" size={1.35} sizeAttenuation transparent opacity={0.95} /></points>
 }
 
 function Simulation({ toolpath, timeline }: { toolpath: Toolpath; timeline: number }) {
@@ -88,10 +98,12 @@ function Simulation({ toolpath, timeline }: { toolpath: Toolpath; timeline: numb
   )
   const visibleCount = Math.max(1, Math.floor(extrusionPoints.length * timeline))
   const activePoint = extrusionPoints[Math.min(visibleCount - 1, extrusionPoints.length - 1)]
+  const hotTail = extrusionPoints.slice(Math.max(0, visibleCount - 90), visibleCount)
   let traversed = 0
 
   return (
     <group>
+      <AnchorPoints toolpath={toolpath} timeline={timeline} />
       {toolpath.segments.map((segment) => {
         const localCount = Math.max(0, Math.min(segment.points.length, visibleCount - traversed))
         traversed += segment.points.length
@@ -99,12 +111,13 @@ function Simulation({ toolpath, timeline }: { toolpath: Toolpath; timeline: numb
         return (
           <Line
             key={segment.id}
-            points={segment.points.slice(0, localCount).map((point) => [point.x, point.y, point.z] as [number, number, number])}
-            color="#f5b35f"
-            lineWidth={2.7}
+            points={segment.points.slice(0, localCount).map((point) => [point.x, point.y, point.z - point.predictedSag] as [number, number, number])}
+            color={segment.family === 'continuous-base' ? '#6b777a' : '#cbd5d7'}
+            lineWidth={1.05}
           />
         )
       })}
+      {hotTail.length > 1 && <Line points={hotTail.map((point) => [point.x, point.y, point.z - point.predictedSag] as [number, number, number])} color="#ff9d4d" lineWidth={2.1} />}
       {activePoint && (
         <group position={[activePoint.x, activePoint.y, activePoint.z + 7]}>
           <mesh rotation={[Math.PI / 2, 0, 0]}>
@@ -114,13 +127,16 @@ function Simulation({ toolpath, timeline }: { toolpath: Toolpath; timeline: numb
           <pointLight color="#ffad57" intensity={1.4} distance={28} />
         </group>
       )}
+      {activePoint && <mesh position={[activePoint.x, activePoint.y, activePoint.z - activePoint.predictedSag]}>
+        <sphereGeometry args={[1.15, 16, 12]} /><meshStandardMaterial color="#ff9d4d" emissive="#ff6a22" emissiveIntensity={1.2} />
+      </mesh>}
     </group>
   )
 }
 
 function Scene({ surface, mappedCurves, toolpath, viewMode, timeline, bedSize }: Viewport3DProps) {
-  const cameraDistance = Math.max(260, surface.maxRadius * 4.35, surface.height * 1.65)
-  const surfaceOpacity = viewMode === 'form' ? 0.95 : viewMode === 'pattern' ? 0.32 : 0.11
+  const cameraDistance = Math.max(120, surface.maxRadius * 4.35, surface.height * 1.65)
+  const surfaceOpacity = viewMode === 'design' ? 0.24 : 0.045
 
   return (
     <>
@@ -149,10 +165,8 @@ function Scene({ surface, mappedCurves, toolpath, viewMode, timeline, bedSize }:
       </lineSegments>
 
       <ParametricMesh surface={surface} opacity={surfaceOpacity} />
-      {viewMode === 'pattern' && <PatternLines curves={mappedCurves} />}
-      {viewMode === 'toolpath' && <ToolpathLines toolpath={toolpath} />}
-      {viewMode === 'extrusion' && <ToolpathLines toolpath={toolpath} extrusion />}
-      {viewMode === 'analysis' && <ToolpathLines toolpath={toolpath} analysis />}
+      {viewMode === 'design' && <PatternLines curves={mappedCurves} />}
+      {viewMode === 'path' && <><ToolpathLines toolpath={toolpath} /><ToolpathLines toolpath={toolpath} predicted /><AnchorPoints toolpath={toolpath} /></>}
       {viewMode === 'simulation' && <Simulation toolpath={toolpath} timeline={timeline} />}
 
       <OrbitControls

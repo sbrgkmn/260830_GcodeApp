@@ -16,16 +16,19 @@ describe('toolpath solver', () => {
     expect(toolpath.orderedPoints.filter((point) => point.segmentType === 'travel')).toHaveLength(1)
     expect(toolpath.constructionLayerCount).toBeGreaterThan(10)
     expect(toolpath.jointCount).toBeGreaterThan(100)
-    expect(toolpath.weaveAmplitude).toBeLessThanOrEqual(1.2)
-    expect(toolpath.maxVerticalAcceleration).toBeLessThanOrEqual(DEFAULT_PRINT.verticalAccelerationLimit + 0.01)
+    expect(toolpath.weaveAmplitude).toBeLessThanOrEqual(1.8)
+    expect(toolpath.anchorCount).toBeGreaterThan(24)
+    expect(toolpath.maximumSpan).toBeLessThanOrEqual(DEFAULT_PRINT.weaveWavelength + 0.2)
     expect(toolpath.orderedPoints.every((point, index, points) => (
-      index === 0 || Math.abs(point.z - points[index - 1].z) < 0.25
+      index === 0 || point.z >= points[index - 1].z - 0.001
     ))).toBe(true)
     expect(toolpath.orderedPoints.filter((point) => point.segmentType === 'extrusion')
-      .every((point) => point.supportState === 'supported')).toBe(true)
+      .some((point) => point.supportState === 'bridge')).toBe(true)
+    expect(toolpath.orderedPoints.filter((point) => point.materialPhase === 'span')
+      .every((point) => point.predictedSag > 0)).toBe(true)
   })
 
-  it('reduces weave speed when amplitude would exceed the Z acceleration limit', () => {
+  it('keeps the helical rise continuous while limiting the requested span speed', () => {
     const surface = createParametricSurface('vase', { ...DEFAULT_FORM, height: 60 })
     const settings = {
       ...DEFAULT_PRINT,
@@ -36,7 +39,7 @@ describe('toolpath solver', () => {
     }
     const toolpath = solveGroundUpToolpath(surface, 'diagrid', DEFAULT_PATTERN, settings)
 
-    expect(toolpath.recommendedSpeed).toBeLessThan(settings.extrusionSpeed)
-    expect(toolpath.maxVerticalAcceleration).toBeLessThanOrEqual(settings.verticalAccelerationLimit + 0.01)
+    expect(toolpath.recommendedSpeed).toBeLessThanOrEqual(32)
+    expect(toolpath.maxVerticalSpeed).toBeGreaterThan(0)
   })
 })

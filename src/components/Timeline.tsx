@@ -63,7 +63,7 @@ export function Timeline({ toolpath }: { toolpath: Toolpath }) {
 
       <div className="timeline-track-wrap">
         <div className="timeline-labels">
-          <span>Toolpath progression</span>
+          <span>One continuous spiral · hot orange → cooled white</span>
           <span>{formatTime(currentSeconds)} / {formatTime(estimatedSeconds)}</span>
         </div>
         <div className="timeline-track">
@@ -83,7 +83,7 @@ export function Timeline({ toolpath }: { toolpath: Toolpath }) {
 
       <div className="cursor-readout">
         <span>PATH <strong>{point?.pathID ?? '—'}</strong></span>
-        <span>LAYER <strong>{point?.constructionLayer ?? '—'}</strong></span>
+        <span>TURN <strong>{point?.constructionLayer ?? '-'}</strong></span>
         <span>X <strong>{point?.x.toFixed(2) ?? '—'}</strong></span>
         <span>Y <strong>{point?.y.toFixed(2) ?? '—'}</strong></span>
         <span>Z <strong>{point?.z.toFixed(2) ?? '—'}</strong></span>

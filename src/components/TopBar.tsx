@@ -1,13 +1,11 @@
 import {
   Box,
   ChevronDown,
-  CircleDotDashed,
   Download,
   FileDown,
   FolderOpen,
   RotateCcw,
   Save,
-  ScanLine,
   Waypoints,
 } from 'lucide-react'
 import { useRef } from 'react'
@@ -16,12 +14,9 @@ import { useAppStore } from '../state/useAppStore'
 import type { ProjectFile, ViewMode } from '../types/domain'
 
 const VIEW_MODES: Array<{ id: ViewMode; label: string; icon: typeof Box }> = [
-  { id: 'form', label: 'Form', icon: Box },
-  { id: 'pattern', label: 'Pattern', icon: CircleDotDashed },
-  { id: 'toolpath', label: 'Toolpath', icon: Waypoints },
-  { id: 'extrusion', label: 'Extrusion', icon: ScanLine },
-  { id: 'simulation', label: 'Simulation', icon: CircleDotDashed },
-  { id: 'analysis', label: 'Analysis', icon: ScanLine },
+  { id: 'design', label: 'Form', icon: Box },
+  { id: 'path', label: 'Helical path', icon: Waypoints },
+  { id: 'simulation', label: 'Material flow', icon: Waypoints },
 ]
 
 interface TopBarProps {

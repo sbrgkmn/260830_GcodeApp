@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LeftPanel, RightPanel } from './components/Controls'
+import { DesignPanel } from './components/Controls'
 import { Timeline } from './components/Timeline'
 import { TopBar } from './components/TopBar'
 import { Viewport3D } from './components/Viewport3D'
@@ -62,7 +62,7 @@ export default function App() {
   }, [toast])
 
   const projectFile = (): ProjectFile => ({
-    appVersion: '0.3.0',
+    appVersion: '0.4.0',
     name: projectName,
     formType,
     formParameters,
@@ -106,17 +106,17 @@ export default function App() {
       />
 
       <main className="workspace-grid">
-        <LeftPanel />
+        <DesignPanel validation={validation} toolpath={toolpath} />
         <section className="viewport-panel">
           <div className="viewport-overlay top-left">
-            <span className="viewport-eyebrow">Live parametric study</span>
+            <span className="viewport-eyebrow">Continuous anchor-and-span helix</span>
             <h1>{projectName}</h1>
             <div className="dimensions-line">
               <span>Ø{(surface.maxRadius * 2).toFixed(0)}</span>
               <i />
               <span>H{surface.height.toFixed(0)}</span>
               <i />
-              <span>{toolpath.constructionLayerCount} build layers</span>
+              <span>{toolpath.constructionLayerCount} spiral turns</span>
             </div>
           </div>
           <div className="viewport-overlay top-right">
@@ -132,14 +132,13 @@ export default function App() {
             bedSize={profile.bedSize}
           />
           <div className="viewport-mode-rail">
-            {(['form', 'pattern', 'toolpath', 'extrusion', 'simulation', 'analysis'] as const).map((mode, index) => (
+            {(['design', 'path', 'simulation'] as const).map((mode, index) => (
               <button key={mode} className={viewMode === mode ? 'active' : ''} onClick={() => setViewMode(mode)}>
                 <span>0{index + 1}</span>{mode}
               </button>
             ))}
           </div>
         </section>
-        <RightPanel validation={validation} toolpath={toolpath} />
       </main>
 
       <Timeline toolpath={toolpath} />

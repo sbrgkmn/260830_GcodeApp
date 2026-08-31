@@ -1,19 +1,19 @@
 # 260830_GcodeApp
 
-260830_GcodeApp is a desktop-oriented computational design application for creating parametric forms, mapping printable surface patterns, solving ordered XYZ extrusion paths, previewing fabrication behavior, and exporting research G-code without using an STL-first slicing workflow. The current implementation delivers the functional app shell plus the first geometry, pattern, and toolpath phases described in the master development prompt.
+260830_GcodeApp is a direct-G-code laboratory for developing continuous, supportless PLA veil structures on the Creality Ender-3 V3 Plus. It builds one ground-up helical route around a guide form rather than slicing an STL into disconnected layers.
 
 Live application: https://sbrgkmn.github.io/260830_GcodeApp/
 
 ## Features
 
 - Live parametric Vase and Lofted Tower geometry
-- Diagrid, Chevron, and Spiral Cross-Lattice pattern generators authored in UV space
-- Surface mapping for design guidance, separated from the printable construction route
-- Continuous ground-up fabrication scheduler with base rings and a layer-supported helical weave
-- Gradual sinusoidal Z movement with calculated speed, vertical acceleration, cooling, and contact-joint control
+- Fixed kink anchors that repeat as structural ribs
+- Short, tensioned extrusion chords between anchors to form an open veil
+- One uninterrupted helix: Z rises continuously with no layer seam or ring reset
+- Separate anchor and span speed/flow orchestration for PLA
 - Physical extrusion calculation using true 3D segment length
-- Interactive Form, Pattern, Toolpath, Extrusion, Simulation, and Analysis views
-- Timeline playback with a moving printhead marker
+- Simplified Form, Helical Path, and Material Flow views
+- Timeline playback with a moving printhead, hot-material tail, cooled strands, anchor beads, and predicted span sag
 - Creality Ender-3 V3 Plus default profile with the official `START_PRINT` / `END_PRINT` macro sequence and relative extrusion
 - Generic Marlin, Creality K1 research, and Bambu P1S research profiles
 - Bounds, volumetric-flow, continuity, and profile-verification checks
@@ -32,11 +32,10 @@ Open the local URL shown by Vite. For a production check, run `pnpm build`; for 
 
 ## Controls
 
-- Use the left panel to choose a preset or form and adjust dimensional parameters.
-- Use the right panel to select a pattern, change cell dimensions, inspect validation, and adjust print settings.
+- Use the single Veil Laboratory panel to set the form, anchor spacing, kink depth, spiral pitch, span flow, and PLA motion.
 - Switch viewport modes from the top toolbar.
 - Orbit with the primary mouse button, pan with the secondary button, and zoom with the wheel.
 - Use the bottom timeline to play, pause, or scrub through the calculated extrusion path.
 - Export project data or fabrication files from the top-right actions.
 
-> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. Sinusoidal weave amplitude, cooling, and contact-joint parameters still require physical calibration on the exact printer. Estimated printability does not guarantee a successful print.
+> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. Suspended spans remain experimental: start with the 50 × 20 mm calibration preset, watch the first revolutions, and keep the machine attended. Estimated flow and sag do not guarantee a successful print.

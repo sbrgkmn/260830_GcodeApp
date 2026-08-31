@@ -3,7 +3,7 @@ export type UVPoint = { u: number; v: number }
 
 export type FormType = 'vase' | 'lofted-tower'
 export type PatternType = 'diagrid' | 'chevron' | 'spiral-cross'
-export type ViewMode = 'form' | 'pattern' | 'toolpath' | 'extrusion' | 'simulation' | 'analysis'
+export type ViewMode = 'design' | 'path' | 'simulation'
 export type SupportState = 'supported' | 'partial' | 'bridge' | 'air' | 'unprintable'
 export type RiskSeverity = 'info' | 'caution' | 'high' | 'block'
 
@@ -79,6 +79,7 @@ export interface PrintSettings {
   weaveWavelength: number
   jointSpeed: number
   verticalAccelerationLimit: number
+  spanFlow: number
 }
 
 export interface ToolpathPoint extends Vec3 {
@@ -93,6 +94,8 @@ export interface ToolpathPoint extends Vec3 {
   pathID: string
   constructionLayer: number
   jointType: 'positioning' | 'base' | 'weave-span' | 'weave-joint' | 'reinforcement'
+  materialPhase: 'positioning' | 'base' | 'anchor' | 'span'
+  predictedSag: number
 }
 
 export interface ToolpathSegment {
@@ -121,6 +124,9 @@ export interface Toolpath {
   recommendedSpeed: number
   maxVerticalSpeed: number
   maxVerticalAcceleration: number
+  anchorCount: number
+  maximumSpan: number
+  predictedSag: number
 }
 
 export interface PrinterProfile {

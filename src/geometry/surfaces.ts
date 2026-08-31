@@ -22,13 +22,16 @@ export function createParametricSurface(
   formType: FormType,
   params: FormParameters,
 ): ParametricSurface {
-  const maxRadius = Math.max(params.bottomRadius, params.topRadius, params.loftMidRadius)
+  const maxRadius = formType === 'lofted-tower'
+    ? Math.max(params.bottomRadius, params.topRadius, params.loftMidRadius)
+    : Math.max(params.bottomRadius, params.topRadius)
 
   return {
     id: formType,
     name: formType === 'vase' ? 'Cylinder / Vase' : 'Lofted Tower',
     height: params.height,
-    maxRadius: maxRadius + Math.abs(params.radialDeformation) + Math.hypot(params.loftOffsetX, params.loftOffsetY),
+    maxRadius: maxRadius + Math.abs(params.radialDeformation) +
+      (formType === 'lofted-tower' ? Math.hypot(params.loftOffsetX, params.loftOffsetY) : 0),
     resolution: params.resolution,
     point: (rawU: number, rawV: number): Vec3 => {
       const u = ((rawU % 1) + 1) % 1
