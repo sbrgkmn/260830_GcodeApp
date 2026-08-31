@@ -33,7 +33,7 @@ export const DEFAULT_PRINT: PrintSettings = {
   nozzleDiameter: 0.4,
   filamentDiameter: 1.75,
   lineWidth: 0.46,
-  effectiveLayerHeight: 0.82,
+  effectiveLayerHeight: 0.52,
   extrusionSpeed: 28,
   travelSpeed: 140,
   flowMultiplier: 1,

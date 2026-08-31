@@ -45,6 +45,8 @@ export function solveGroundUpToolpath(surface: ParametricSurface, patternID: Pat
   const actualSpan = circumference / anchorCount
   const kinkDepth = clamp(settings.weaveAmplitude, 0.15, 1.8)
   const spiralPitch = clamp(settings.effectiveLayerHeight, 0.42, 1.4)
+  const jointBeadHeight = Math.min(settings.nozzleDiameter * 1.55, settings.lineWidth * 1.3)
+  const jointOverlap = jointBeadHeight - spiralPitch
   const predictedSag = clamp(actualSpan ** 2 / 480 * (1 - settings.spanFlow * 0.22), 0.05, 0.5)
   const recommendedSpeed = clamp(Math.min(settings.extrusionSpeed, 32), 16, 32)
   const jointSpeed = clamp(Math.min(settings.jointSpeed, recommendedSpeed), 8, 20)
@@ -92,5 +94,5 @@ export function solveGroundUpToolpath(surface: ParametricSurface, patternID: Pat
     segments.push({ id: pathID, family: 'continuous-helical-veil', points, length: totalLength - lengthStart, supportState: 'bridge', constructionLayer: turn + 1, jointCount: anchorCount })
   }
 
-  return { segments, orderedPoints, totalLength, extrusionLength: totalLength, travelLength: 0, filamentLength: cumulativeE, continuousPathCount: 1, constructionLayerCount: turnCount, layerPitch: spiralPitch, weaveAmplitude: kinkDepth, weaveWavelength: actualSpan, jointCount, recommendedSpeed, maxVerticalSpeed, maxVerticalAcceleration, anchorCount, maximumSpan: actualSpan, predictedSag }
+  return { segments, orderedPoints, totalLength, extrusionLength: totalLength, travelLength: 0, filamentLength: cumulativeE, continuousPathCount: 1, constructionLayerCount: turnCount, layerPitch: spiralPitch, weaveAmplitude: kinkDepth, weaveWavelength: actualSpan, jointCount, recommendedSpeed, maxVerticalSpeed, maxVerticalAcceleration, anchorCount, maximumSpan: actualSpan, predictedSag, jointBeadHeight, jointOverlap }
 }

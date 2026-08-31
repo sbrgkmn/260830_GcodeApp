@@ -127,6 +127,8 @@ export interface Toolpath {
   anchorCount: number
   maximumSpan: number
   predictedSag: number
+  jointBeadHeight: number
+  jointOverlap: number
 }
 
 export interface PrinterProfile {

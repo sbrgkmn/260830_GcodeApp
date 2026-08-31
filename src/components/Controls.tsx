@@ -52,7 +52,7 @@ export function DesignPanel({ validation, toolpath }: { validation: ValidationRe
       <div><strong>{toolpath.anchorCount}</strong><span>anchor ribs</span></div>
       <div><strong>{toolpath.maximumSpan.toFixed(1)} mm</strong><span>actual span</span></div>
       <div><strong>{toolpath.layerPitch.toFixed(2)} mm</strong><span>rise / revolution</span></div>
-      <div><strong>{toolpath.predictedSag.toFixed(2)} mm</strong><span>modeled sag</span></div>
+      <div><strong>{toolpath.jointOverlap >= 0 ? '+' : ''}{toolpath.jointOverlap.toFixed(2)} mm</strong><span>joint overlap</span></div>
     </section>
     <section className={`panel-section readiness ${validation.isExportBlocked ? 'blocked' : 'ready'}`}>
       {validation.isExportBlocked ? <CircleAlert size={16} /> : <CircleCheck size={16} />}

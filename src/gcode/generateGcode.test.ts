@@ -69,4 +69,17 @@ describe('G-code generator', () => {
       'Cold extrusion test',
     )).toThrow('requires at least 170 C')
   })
+
+  it('refuses G-code when kink beads cannot fuse between revolutions', () => {
+    const surface = createParametricSurface('vase', { ...DEFAULT_FORM, height: 30, resolution: 32 })
+    const separatedSettings = { ...DEFAULT_PRINT, effectiveLayerHeight: 0.82 }
+    const toolpath = solveGroundUpToolpath(surface, 'diagrid', DEFAULT_PATTERN, separatedSettings)
+
+    expect(() => generateGcode(
+      toolpath,
+      getPrinterProfile('creality-ender-3-v3-plus'),
+      separatedSettings,
+      'Separated joints',
+    )).toThrow('reduce spiral pitch')
+  })
 })

@@ -11,6 +11,8 @@ Live application: https://sbrgkmn.github.io/260830_GcodeApp/
 - Short, tensioned extrusion chords between anchors to form an open veil
 - One uninterrupted helix: Z rises continuously with no layer seam or ring reset
 - Separate anchor and span speed/flow orchestration for PLA
+- Conservative anchor-bead contact model with visible fused-rib preview
+- Export block when spiral pitch removes the required structural-joint overlap
 - Physical extrusion calculation using true 3D segment length
 - Simplified Form, Helical Path, and Material Flow views
 - Timeline playback with a moving printhead, hot-material tail, cooled strands, anchor beads, and predicted span sag
@@ -38,4 +40,4 @@ Open the local URL shown by Vite. For a production check, run `pnpm build`; for 
 - Use the bottom timeline to play, pause, or scrub through the calculated extrusion path.
 - Export project data or fabrication files from the top-right actions.
 
-> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. Suspended spans remain experimental: start with the 50 × 20 mm calibration preset, watch the first revolutions, and keep the machine attended. Estimated flow and sag do not guarantee a successful print.
+> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. The default 0.52 mm/rev pitch models approximately 0.08 mm of overlap between the over-extruded anchor beads. This is a conservative geometry estimate, not a material guarantee: start with the 50 × 20 mm calibration preset, verify that every rib fuses, and keep the machine attended.

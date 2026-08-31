@@ -83,13 +83,27 @@ function ToolpathLines({ toolpath, predicted = false }: { toolpath: Toolpath; pr
 }
 
 function AnchorPoints({ toolpath, timeline = 1 }: { toolpath: Toolpath; timeline?: number }) {
-  const positions = useMemo(() => {
+  const { positions, connections } = useMemo(() => {
     const extrusion = toolpath.orderedPoints.filter((point) => point.segmentType === 'extrusion')
     const limit = Math.floor(extrusion.length * timeline)
     const anchors = extrusion.slice(0, limit).filter((point) => point.materialPhase === 'anchor')
-    return new Float32Array(anchors.flatMap((point) => [point.x, point.y, point.z]))
+    const ribSegments: number[] = []
+    if (toolpath.jointOverlap >= 0.03) {
+      for (let index = toolpath.anchorCount; index < anchors.length; index += 1) {
+        const below = anchors[index - toolpath.anchorCount]
+        const above = anchors[index]
+        ribSegments.push(below.x, below.y, below.z, above.x, above.y, above.z)
+      }
+    }
+    return {
+      positions: new Float32Array(anchors.flatMap((point) => [point.x, point.y, point.z])),
+      connections: new Float32Array(ribSegments),
+    }
   }, [toolpath, timeline])
-  return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#f4f6f6" size={1.35} sizeAttenuation transparent opacity={0.95} /></points>
+  return <group>
+    {connections.length > 0 && <lineSegments><bufferGeometry><bufferAttribute attach="attributes-position" args={[connections, 3]} /></bufferGeometry><lineBasicMaterial color="#c9f4ec" transparent opacity={0.72} /></lineSegments>}
+    <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#f4f6f6" size={1.35} sizeAttenuation transparent opacity={0.95} /></points>
+  </group>
 }
 
 function DepositedMaterial({ points }: { points: Toolpath['orderedPoints'] }) {

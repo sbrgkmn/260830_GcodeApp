@@ -19,6 +19,7 @@ describe('toolpath solver', () => {
     expect(toolpath.weaveAmplitude).toBeLessThanOrEqual(1.8)
     expect(toolpath.anchorCount).toBeGreaterThan(24)
     expect(toolpath.maximumSpan).toBeLessThanOrEqual(DEFAULT_PRINT.weaveWavelength + 0.2)
+    expect(toolpath.jointOverlap).toBeGreaterThanOrEqual(0.03)
     expect(toolpath.orderedPoints.every((point, index, points) => (
       index === 0 || point.z >= points[index - 1].z - 0.001
     ))).toBe(true)
@@ -26,6 +27,15 @@ describe('toolpath solver', () => {
       .some((point) => point.supportState === 'bridge')).toBe(true)
     expect(toolpath.orderedPoints.filter((point) => point.materialPhase === 'span')
       .every((point) => point.predictedSag > 0)).toBe(true)
+  })
+
+  it('reports separated anchor beads when spiral pitch exceeds joint height', () => {
+    const surface = createParametricSurface('vase', { ...DEFAULT_FORM, height: 30 })
+    const toolpath = solveGroundUpToolpath(surface, 'diagrid', DEFAULT_PATTERN, {
+      ...DEFAULT_PRINT,
+      effectiveLayerHeight: 0.82,
+    })
+    expect(toolpath.jointOverlap).toBeLessThan(0)
   })
 
   it('keeps the helical rise continuous while limiting the requested span speed', () => {
