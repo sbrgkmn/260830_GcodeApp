@@ -1,5 +1,5 @@
 import { Pause, Play, SkipBack } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useAppStore } from '../state/useAppStore'
 import type { Toolpath } from '../types/domain'
 
@@ -31,7 +31,12 @@ export function Timeline({ toolpath }: { toolpath: Toolpath }) {
     Math.max(0, Math.floor(toolpath.orderedPoints.length * timeline)),
   )
   const point = toolpath.orderedPoints[activeIndex]
-  const estimatedSeconds = toolpath.totalLength / 35 + toolpath.travelLength / 140
+  const estimatedSeconds = useMemo(() => toolpath.orderedPoints.reduce((seconds, point, index, points) => {
+    if (index === 0) return seconds
+    const previous = points[index - 1]
+    const moveLength = Math.hypot(point.x - previous.x, point.y - previous.y, point.z - previous.z)
+    return seconds + moveLength / Math.max(1, point.feedrate / 60)
+  }, 0), [toolpath])
   const currentSeconds = estimatedSeconds * timeline
   const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 

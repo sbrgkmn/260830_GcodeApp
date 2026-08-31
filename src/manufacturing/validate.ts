@@ -14,7 +14,7 @@ export function validateToolpath(
   toolpath: Toolpath,
   profile: PrinterProfile,
   settings: PrintSettings,
-  researchMode = false,
+  _researchMode = false,
 ): ValidationResult {
   const issues: ValidationIssue[] = []
   const [bedX, bedY, bedZ] = profile.bedSize
@@ -23,14 +23,14 @@ export function validateToolpath(
   const invalidPoints = toolpath.orderedPoints.some(
     (point) => !Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.z) || point.z < 0,
   )
-  const maxVolumetricFlow = settings.lineWidth * settings.effectiveLayerHeight * settings.extrusionSpeed
+  const maxVolumetricFlow = settings.lineWidth * settings.effectiveLayerHeight * toolpath.recommendedSpeed
   const flowLimit = Math.min(profile.maxVolumetricFlow, 12)
-  const partialSegments = toolpath.segments.filter((segment) =>
-    segment.points.some((point) => point.supportState === 'partial'),
-  ).length
-  const unprintableSegments = toolpath.segments.filter((segment) =>
-    segment.points.some((point) => point.supportState === 'unprintable'),
-  ).length
+  const maximumWaveSlope = Math.atan(
+    Math.PI * 2 * toolpath.weaveAmplitude / toolpath.weaveWavelength,
+  ) * 180 / Math.PI
+  const conservativePhaseDrift = 0.22
+  const minimumTurnSeparation = toolpath.layerPitch -
+    toolpath.weaveAmplitude * Math.sin(conservativePhaseDrift / 2)
 
   if (settings.nozzleTemperature < profile.minExtrusionTemperature) {
     issues.push({
@@ -40,7 +40,6 @@ export function validateToolpath(
       detail: `${profile.displayName} requires at least ${profile.minExtrusionTemperature} C before any extrusion move.`,
     })
   }
-
   if (invalidPoints) {
     issues.push({
       id: 'invalid-coordinate',
@@ -54,7 +53,7 @@ export function validateToolpath(
       id: 'machine-bounds',
       severity: 'block',
       title: 'Machine boundary violation',
-      detail: `${Math.round(radius * 2)} × ${Math.round(radius * 2)} × ${Math.round(surface.height)} mm exceeds the ${profile.bedSize.join(' × ')} mm envelope.`,
+      detail: `${Math.round(radius * 2)} x ${Math.round(radius * 2)} x ${Math.round(surface.height)} mm exceeds the ${profile.bedSize.join(' x ')} mm envelope.`,
     })
   }
   if (maxVolumetricFlow > flowLimit) {
@@ -62,31 +61,39 @@ export function validateToolpath(
       id: 'volumetric-flow',
       severity: 'high',
       title: 'Volumetric flow exceeds profile limit',
-      detail: `${maxVolumetricFlow.toFixed(2)} mm³/s requested; keep this profile at or below ${flowLimit.toFixed(1)} mm³/s.`,
+      detail: `${maxVolumetricFlow.toFixed(2)} mm3/s requested; keep this profile at or below ${flowLimit.toFixed(1)} mm3/s.`,
     })
   }
-  if (unprintableSegments > 0) {
+  if (minimumTurnSeparation < settings.effectiveLayerHeight * 0.55) {
     issues.push({
-      id: 'skip-span-risk',
-      severity: researchMode ? 'high' : 'block',
-      title: 'Skip-joint span exceeds PLA envelope',
-      detail: `${unprintableSegments} construction layers exceed the ${settings.maxSkipSpan.toFixed(1)} mm calibrated skip limit.`,
+      id: 'turn-overlap',
+      severity: 'block',
+      title: 'Wave phase can collide with the prior turn',
+      detail: `Minimum modeled turn separation is ${minimumTurnSeparation.toFixed(2)} mm. Reduce wave amplitude or increase layer pitch.`,
     })
   }
-  if (partialSegments > 0) {
+  if (maximumWaveSlope > 24) {
     issues.push({
-      id: 'rise-angle-risk',
+      id: 'wave-slope',
       severity: 'high',
-      title: 'Rising strands are too shallow',
-      detail: `${partialSegments} construction layers fall below the ${settings.minRiseAngle.toFixed(0)}° rising-strand threshold.`,
+      title: 'Sinusoidal movement is too steep',
+      detail: `${maximumWaveSlope.toFixed(1)} degree maximum slope; increase wavelength or reduce amplitude.`,
     })
   }
-  if (unprintableSegments === 0) {
+  if (settings.nozzleTemperature > 210) {
     issues.push({
-      id: 'skip-joints',
-      severity: 'info',
-      title: `${toolpath.skipJointCount} PLA skip joints monitored`,
-      detail: `Maximum modeled span is ${toolpath.maxSkipSpan.toFixed(2)} mm within the ${settings.maxSkipSpan.toFixed(1)} mm calibration envelope.`,
+      id: 'pla-temperature',
+      severity: 'caution',
+      title: 'PLA may remain soft at the joint',
+      detail: `${settings.nozzleTemperature} C is above the conservative 205-210 C starting range for this supported weave.`,
+    })
+  }
+  if (settings.fan < 90) {
+    issues.push({
+      id: 'weave-cooling',
+      severity: 'caution',
+      title: 'Increase PLA cooling',
+      detail: `${settings.fan}% fan may not freeze the sinusoidal crest before the next supported turn.`,
     })
   }
   if (profile.requiresVerification) {
@@ -97,31 +104,36 @@ export function validateToolpath(
       detail: `${profile.displayName} does not include a verified machine startup sequence.`,
     })
   }
+
+  issues.push({
+    id: 'supported-weave',
+    severity: 'info',
+    title: 'Layer-supported sinusoidal weave',
+    detail: `${toolpath.constructionLayerCount} continuous helical turns place every wave above the preceding turn; tall air loops are disabled.`,
+  })
+  issues.push({
+    id: 'motion-orchestration',
+    severity: 'info',
+    title: `${toolpath.recommendedSpeed.toFixed(1)} mm/s calculated weave speed`,
+    detail: `Maximum modeled Z speed is ${toolpath.maxVerticalSpeed.toFixed(2)} mm/s and Z acceleration is ${toolpath.maxVerticalAcceleration.toFixed(1)} mm/s2. Joints use ${settings.jointSpeed.toFixed(0)} mm/s without dwell.`,
+  })
   if (toolpath.continuousPathCount === 1) {
     issues.push({
       id: 'continuity',
       severity: 'info',
       title: 'Single continuous extrusion route',
-      detail: `Base plus ${toolpath.constructionLayerCount} ground-up layers contain no inter-layer travel breaks.`,
-    })
-  }
-  if (issues.length === 0) {
-    issues.push({
-      id: 'nominal',
-      severity: 'info',
-      title: 'No blocking issues detected',
-      detail: 'This remains an estimate and does not guarantee printing success.',
+      detail: `Four base rings and ${toolpath.constructionLayerCount} helical turns contain no inter-layer travel breaks.`,
     })
   }
 
-  const supportScore = clampScore(100 - partialSegments * 3 - unprintableSegments * 12)
-  const continuityScore = toolpath.continuousPathCount === 1 ? 100 : clampScore(100 - toolpath.continuousPathCount * 4)
+  const supportScore = clampScore(100 - Math.max(0, maximumWaveSlope - 18) * 2)
+  const continuityScore = toolpath.continuousPathCount === 1 ? 100 : 50
   const extrusionScore = clampScore(100 - Math.max(0, maxVolumetricFlow - flowLimit) * 12)
   const machineLimits = outOfBounds || invalidPoints ? 0 : 100
   const categoryScores = {
     continuity: continuityScore,
     support: supportScore,
-    collision: 92,
+    collision: minimumTurnSeparation > settings.effectiveLayerHeight * 0.55 ? 98 : 0,
     extrusion: extrusionScore,
     machineLimits,
   }
@@ -135,7 +147,7 @@ export function validateToolpath(
     score,
     categoryScores,
     maxVolumetricFlow,
-    minClearance: Math.max(2, 10 - surface.maxRadius / 45),
+    minClearance: minimumTurnSeparation,
     issues,
   }
 }

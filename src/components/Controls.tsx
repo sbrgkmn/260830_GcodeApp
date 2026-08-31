@@ -43,6 +43,7 @@ function PanelHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
 }
 
 export function LeftPanel() {
+  const projectName = useAppStore((state) => state.projectName)
   const formType = useAppStore((state) => state.formType)
   const params = useAppStore((state) => state.formParameters)
   const setFormType = useAppStore((state) => state.setFormType)
@@ -58,17 +59,22 @@ export function LeftPanel() {
       <section className="panel-section preset-section">
         <div className="section-label">Project presets</div>
         <div className="preset-grid">
-          <button className="preset-card active" onClick={() => applyPreset('diagrid-vase')}>
+          <button className={`preset-card ${projectName === 'PLA Weave Calibration' ? 'active' : ''}`} onClick={() => applyPreset('weave-calibration')}>
+            <span className="preset-glyph spiral-glyph" />
+            <span>PLA Calibration</span>
+            <small>Ø50 / H20</small>
+          </button>
+          <button className={`preset-card ${projectName === 'Diagrid Vase 01' ? 'active' : ''}`} onClick={() => applyPreset('diagrid-vase')}>
             <span className="preset-glyph diagrid-glyph" />
             <span>Diagrid Vase</span>
             <small>140 / 105 / 180</small>
           </button>
-          <button className="preset-card" onClick={() => applyPreset('twisted-tower')}>
+          <button className={`preset-card ${projectName === 'Twisted Tower' ? 'active' : ''}`} onClick={() => applyPreset('twisted-tower')}>
             <span className="preset-glyph tower-glyph" />
             <span>Twisted Tower</span>
             <small>Lofted / 150°</small>
           </button>
-          <button className="preset-card" onClick={() => applyPreset('helical-lampshade')}>
+          <button className={`preset-card ${projectName === 'Helical Shade' ? 'active' : ''}`} onClick={() => applyPreset('helical-lampshade')}>
             <span className="preset-glyph spiral-glyph" />
             <span>Helical Shade</span>
             <small>Cross-lattice</small>
@@ -94,7 +100,7 @@ export function LeftPanel() {
           <span className="section-label">Dimensions</span>
           <span className="section-meta">millimeters</span>
         </div>
-        <RangeControl label="Height" value={params.height} min={60} max={240} unit=" mm" onChange={update('height')} />
+        <RangeControl label="Height" value={params.height} min={20} max={240} unit=" mm" onChange={update('height')} />
         <RangeControl label="Bottom radius" value={params.bottomRadius} min={20} max={95} unit=" mm" onChange={update('bottomRadius')} />
         <RangeControl label="Top radius" value={params.topRadius} min={18} max={95} unit=" mm" onChange={update('topRadius')} />
         {formType === 'lofted-tower' && (
@@ -190,13 +196,13 @@ export function RightPanel({ validation, toolpath }: { validation: ValidationRes
       </section>
 
       <details className="panel-details" open>
-        <summary><span>Structural layers & joints</span><ChevronDown size={14} /></summary>
+        <summary><span>Supported sinusoidal weave</span><ChevronDown size={14} /></summary>
         <div className="details-content">
           <RangeControl label="Base rings" value={print.baseRingCount} min={1} max={6} onChange={updatePrint('baseRingCount')} />
-          <RangeControl label="Maximum build lift" value={print.constructionLift} min={3} max={14} step={0.5} unit=" mm" onChange={updatePrint('constructionLift')} />
-          <RangeControl label="Maximum PLA skip" value={print.maxSkipSpan} min={4} max={24} step={0.5} unit=" mm" onChange={updatePrint('maxSkipSpan')} />
-          <RangeControl label="Minimum rise angle" value={print.minRiseAngle} min={20} max={70} unit="°" onChange={updatePrint('minRiseAngle')} />
-          <RangeControl label="Joint dwell" value={print.jointDwellMs} min={0} max={220} step={10} unit=" ms" onChange={updatePrint('jointDwellMs')} />
+          <RangeControl label="Wave amplitude" value={print.weaveAmplitude} min={0.12} max={1.2} step={0.01} unit=" mm" onChange={updatePrint('weaveAmplitude')} />
+          <RangeControl label="Wave wavelength" value={print.weaveWavelength} min={8} max={28} step={0.5} unit=" mm" onChange={updatePrint('weaveWavelength')} />
+          <RangeControl label="Joint speed" value={print.jointSpeed} min={8} max={22} unit=" mm/s" onChange={updatePrint('jointSpeed')} />
+          <RangeControl label="Vertical acceleration limit" value={print.verticalAccelerationLimit} min={30} max={140} step={5} unit=" mm/s²" onChange={updatePrint('verticalAccelerationLimit')} />
         </div>
       </details>
 
@@ -217,9 +223,11 @@ export function RightPanel({ validation, toolpath }: { validation: ValidationRes
             <span>{profile.requiresVerification ? 'Profile requires verification' : 'Conservative profile ready'}</span>
           </div>
           <RangeControl label="Line width" value={print.lineWidth} min={0.3} max={0.8} step={0.01} unit=" mm" onChange={updatePrint('lineWidth')} />
-          <RangeControl label="Effective height" value={print.effectiveLayerHeight} min={0.12} max={0.42} step={0.01} unit=" mm" onChange={updatePrint('effectiveLayerHeight')} />
-          <RangeControl label="Print speed" value={print.extrusionSpeed} min={10} max={90} unit=" mm/s" onChange={updatePrint('extrusionSpeed')} />
+          <RangeControl label="Layer pitch" value={print.effectiveLayerHeight} min={0.12} max={0.32} step={0.01} unit=" mm" onChange={updatePrint('effectiveLayerHeight')} />
+          <RangeControl label="Maximum weave speed" value={print.extrusionSpeed} min={10} max={36} unit=" mm/s" onChange={updatePrint('extrusionSpeed')} />
           <RangeControl label="Flow" value={print.flowMultiplier * 100} min={70} max={130} unit="%" onChange={(value) => updatePrint('flowMultiplier')(value / 100)} />
+          <RangeControl label="PLA nozzle" value={print.nozzleTemperature} min={190} max={220} unit=" °C" onChange={updatePrint('nozzleTemperature')} />
+          <RangeControl label="Cooling fan" value={print.fan} min={50} max={100} unit="%" onChange={updatePrint('fan')} />
         </div>
       </details>
 
@@ -227,10 +235,11 @@ export function RightPanel({ validation, toolpath }: { validation: ValidationRes
         <div><span>Path length</span><strong>{(toolpath.totalLength / 1000).toFixed(2)} m</strong></div>
         <div><span>Filament</span><strong>{toolpath.filamentLength.toFixed(0)} mm</strong></div>
         <div><span>Build layers</span><strong>{toolpath.constructionLayerCount}</strong></div>
-        <div><span>Actual lift</span><strong>{toolpath.constructionLift.toFixed(1)} mm</strong></div>
-        <div><span>Skip joints</span><strong>{toolpath.skipJointCount}</strong></div>
+        <div><span>Layer pitch</span><strong>{toolpath.layerPitch.toFixed(2)} mm</strong></div>
+        <div><span>Contact joints</span><strong>{toolpath.jointCount}</strong></div>
         <div><span>Continuous paths</span><strong>{toolpath.continuousPathCount}</strong></div>
-        <div><span>Maximum skip</span><strong>{toolpath.maxSkipSpan.toFixed(1)} mm</strong></div>
+        <div><span>Calculated speed</span><strong>{toolpath.recommendedSpeed.toFixed(1)} mm/s</strong></div>
+        <div><span>Maximum Z speed</span><strong>{toolpath.maxVerticalSpeed.toFixed(1)} mm/s</strong></div>
       </section>
 
       <label className="mode-switch">

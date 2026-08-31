@@ -62,7 +62,7 @@ export default function App() {
   }, [toast])
 
   const projectFile = (): ProjectFile => ({
-    appVersion: '0.2.0',
+    appVersion: '0.3.0',
     name: projectName,
     formType,
     formParameters,

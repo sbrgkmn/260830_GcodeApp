@@ -75,10 +75,10 @@ export interface PrintSettings {
   bedTemperature: number
   fan: number
   baseRingCount: number
-  constructionLift: number
-  maxSkipSpan: number
-  minRiseAngle: number
-  jointDwellMs: number
+  weaveAmplitude: number
+  weaveWavelength: number
+  jointSpeed: number
+  verticalAccelerationLimit: number
 }
 
 export interface ToolpathPoint extends Vec3 {
@@ -92,7 +92,7 @@ export interface ToolpathPoint extends Vec3 {
   patternID: PatternType
   pathID: string
   constructionLayer: number
-  jointType: 'positioning' | 'base' | 'rising-strand' | 'skip-joint' | 'reinforcement'
+  jointType: 'positioning' | 'base' | 'weave-span' | 'weave-joint' | 'reinforcement'
 }
 
 export interface ToolpathSegment {
@@ -114,9 +114,13 @@ export interface Toolpath {
   filamentLength: number
   continuousPathCount: number
   constructionLayerCount: number
-  constructionLift: number
-  skipJointCount: number
-  maxSkipSpan: number
+  layerPitch: number
+  weaveAmplitude: number
+  weaveWavelength: number
+  jointCount: number
+  recommendedSpeed: number
+  maxVerticalSpeed: number
+  maxVerticalAcceleration: number
 }
 
 export interface PrinterProfile {

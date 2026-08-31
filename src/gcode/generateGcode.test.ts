@@ -20,8 +20,10 @@ describe('G-code generator', () => {
     expect(gcode).toContain(' Z')
     expect(gcode).toContain(' E')
     expect(gcode).toContain('M104 S0')
-    expect(gcode).toContain('one continuous extrusion route')
-    expect(gcode).toContain('PLA joint consolidation')
+    expect(gcode).toContain('one continuous supported sinusoidal weave')
+    expect(gcode).toContain('supported sinusoidal weave')
+    expect(gcode).not.toContain('PLA joint consolidation')
+    expect(gcode).not.toContain('G4 P')
     expect(gcode).toContain('; end of generated file')
   })
 
@@ -37,7 +39,7 @@ describe('G-code generator', () => {
 
     expect(gcode).toContain('; HEADER_BLOCK_START')
     expect(gcode).toContain('; EXECUTABLE_BLOCK_START')
-    expect(gcode).toContain('M140 S0\nM104 S0\nSTART_PRINT EXTRUDER_TEMP=215 BED_TEMP=60')
+    expect(gcode).toContain('M140 S0\nM104 S0\nSTART_PRINT EXTRUDER_TEMP=205 BED_TEMP=60')
     expect(gcode).toContain('G21\nM83 ; use relative distances for extrusion')
     expect(gcode).not.toContain('M82')
     expect(gcode).not.toContain('M190 S60')

@@ -9,8 +9,8 @@ Live application: https://sbrgkmn.github.io/260830_GcodeApp/
 - Live parametric Vase and Lofted Tower geometry
 - Diagrid, Chevron, and Spiral Cross-Lattice pattern generators authored in UV space
 - Surface mapping for design guidance, separated from the printable construction route
-- Continuous ground-up fabrication scheduler with base rings and connected structural layers
-- PLA skip-joint span, rising-angle, reinforcement, and dwell monitoring
+- Continuous ground-up fabrication scheduler with base rings and a layer-supported helical weave
+- Gradual sinusoidal Z movement with calculated speed, vertical acceleration, cooling, and contact-joint control
 - Physical extrusion calculation using true 3D segment length
 - Interactive Form, Pattern, Toolpath, Extrusion, Simulation, and Analysis views
 - Timeline playback with a moving printhead marker
@@ -19,6 +19,7 @@ Live application: https://sbrgkmn.github.io/260830_GcodeApp/
 - Bounds, volumetric-flow, continuity, and profile-verification checks
 - G-code, toolpath CSV, and project JSON export
 - Project presets, reset, duplicate, save, and load workflows
+- Small 50 mm diameter × 20 mm PLA weave calibration preset for first-print tuning
 
 ## Getting started
 
@@ -38,4 +39,4 @@ Open the local URL shown by Vite. For a production check, run `pnpm build`; for 
 - Use the bottom timeline to play, pause, or scrub through the calculated extrusion path.
 - Export project data or fabrication files from the top-right actions.
 
-> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. Experimental PLA skip-joint parameters still require physical calibration on the exact printer. Estimated printability does not guarantee a successful print.
+> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. Sinusoidal weave amplitude, cooling, and contact-joint parameters still require physical calibration on the exact printer. Estimated printability does not guarantee a successful print.

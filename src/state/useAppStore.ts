@@ -33,18 +33,18 @@ export const DEFAULT_PRINT: PrintSettings = {
   nozzleDiameter: 0.4,
   filamentDiameter: 1.75,
   lineWidth: 0.46,
-  effectiveLayerHeight: 0.24,
-  extrusionSpeed: 35,
+  effectiveLayerHeight: 0.28,
+  extrusionSpeed: 24,
   travelSpeed: 140,
   flowMultiplier: 1,
-  nozzleTemperature: 215,
+  nozzleTemperature: 205,
   bedTemperature: 60,
   fan: 100,
-  baseRingCount: 3,
-  constructionLift: 10,
-  maxSkipSpan: 12,
-  minRiseAngle: 35,
-  jointDwellMs: 60,
+  baseRingCount: 4,
+  weaveAmplitude: 0.45,
+  weaveWavelength: 14,
+  jointSpeed: 12,
+  verticalAccelerationLimit: 70,
 }
 
 interface AppState {
@@ -77,13 +77,30 @@ interface AppState {
 }
 
 const PRESETS: Record<string, Partial<AppState>> = {
+  'weave-calibration': {
+    projectName: 'PLA Weave Calibration',
+    formType: 'vase',
+    patternType: 'diagrid',
+    formParameters: {
+      ...DEFAULT_FORM,
+      height: 20,
+      bottomRadius: 25,
+      topRadius: 25,
+      twist: 0,
+      resolution: 48,
+    },
+    patternParameters: { ...DEFAULT_PATTERN, cellWidth: 12, cellHeight: 12 },
+    printSettings: DEFAULT_PRINT,
+  },
   'diagrid-vase': {
+    projectName: 'Diagrid Vase 01',
     formType: 'vase',
     patternType: 'diagrid',
     formParameters: DEFAULT_FORM,
     patternParameters: DEFAULT_PATTERN,
   },
   'twisted-tower': {
+    projectName: 'Twisted Tower',
     formType: 'lofted-tower',
     patternType: 'chevron',
     formParameters: {
@@ -99,6 +116,7 @@ const PRESETS: Record<string, Partial<AppState>> = {
     patternParameters: { ...DEFAULT_PATTERN, cellWidth: 18, cellHeight: 24, rotation: 18 },
   },
   'helical-lampshade': {
+    projectName: 'Helical Shade',
     formType: 'vase',
     patternType: 'spiral-cross',
     formParameters: { ...DEFAULT_FORM, height: 190, bottomRadius: 74, topRadius: 48, twist: 35 },
@@ -142,7 +160,7 @@ export const useAppStore = create<AppState>((set) => ({
     formParameters: project.formParameters,
     patternType: project.patternType,
     patternParameters: project.patternParameters,
-    printSettings: project.printSettings,
+    printSettings: { ...DEFAULT_PRINT, ...project.printSettings },
     printerId: project.printerId,
     researchMode: project.researchMode,
     timeline: 1,
