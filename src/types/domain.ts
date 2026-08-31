@@ -131,6 +131,8 @@ export interface PrinterProfile {
   gcodeDialect: 'marlin' | 'klipper' | 'bambu'
   maxVolumetricFlow: number
   maxFeedrate: number
+  extrusionMode: 'absolute' | 'relative'
+  minExtrusionTemperature: number
   source: string
   sourceVersion: string
   lastVerified: string

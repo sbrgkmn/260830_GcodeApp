@@ -32,6 +32,15 @@ export function validateToolpath(
     segment.points.some((point) => point.supportState === 'unprintable'),
   ).length
 
+  if (settings.nozzleTemperature < profile.minExtrusionTemperature) {
+    issues.push({
+      id: 'minimum-extrusion-temperature',
+      severity: 'block',
+      title: 'Nozzle temperature below firmware limit',
+      detail: `${profile.displayName} requires at least ${profile.minExtrusionTemperature} C before any extrusion move.`,
+    })
+  }
+
   if (invalidPoints) {
     issues.push({
       id: 'invalid-coordinate',
@@ -85,7 +94,7 @@ export function validateToolpath(
       id: 'profile-verification',
       severity: 'caution',
       title: 'Profile requires verification',
-      detail: `${profile.displayName} does not include a verified proprietary startup sequence.`,
+      detail: `${profile.displayName} does not include a verified machine startup sequence.`,
     })
   }
   if (toolpath.continuousPathCount === 1) {

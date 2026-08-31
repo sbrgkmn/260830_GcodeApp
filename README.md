@@ -14,7 +14,7 @@ Live application: https://sbrgkmn.github.io/260830_GcodeApp/
 - Physical extrusion calculation using true 3D segment length
 - Interactive Form, Pattern, Toolpath, Extrusion, Simulation, and Analysis views
 - Timeline playback with a moving printhead marker
-- Creality Ender-3 V3 Plus default profile with its official 300 × 300 × 330 mm machine envelope
+- Creality Ender-3 V3 Plus default profile with the official `START_PRINT` / `END_PRINT` macro sequence and relative extrusion
 - Generic Marlin, Creality K1 research, and Bambu P1S research profiles
 - Bounds, volumetric-flow, continuity, and profile-verification checks
 - G-code, toolpath CSV, and project JSON export
@@ -38,4 +38,4 @@ Open the local URL shown by Vite. For a production check, run `pnpm build`; for 
 - Use the bottom timeline to play, pause, or scrub through the calculated extrusion path.
 - Export project data or fabrication files from the top-right actions.
 
-> The Ender-3 V3 Plus machine envelope is sourced from Creality, but its startup sequence and all experimental PLA skip-joint parameters still require verification and physical calibration on the exact printer. Estimated printability does not guarantee a successful print.
+> The Ender-3 V3 Plus startup contract is matched to Creality Print and a known-good machine export. Experimental PLA skip-joint parameters still require physical calibration on the exact printer. Estimated printability does not guarantee a successful print.
