@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.codex-doc-review/
+*.tsbuildinfo
+.DS_Store
