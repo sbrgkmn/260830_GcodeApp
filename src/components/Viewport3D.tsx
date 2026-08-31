@@ -65,19 +65,20 @@ function PatternLines({ curves }: { curves: MappedCurve[] }) {
 }
 
 function ToolpathLines({ toolpath, predicted = false }: { toolpath: Toolpath; predicted?: boolean }) {
+  const points = useMemo(
+    () => toolpath.orderedPoints
+      .filter((point) => point.segmentType === 'extrusion')
+      .map((point) => [point.x, point.y, point.z - (predicted ? point.predictedSag : 0)] as [number, number, number]),
+    [toolpath, predicted],
+  )
   return (
-    <group>
-      {toolpath.segments.map((segment) => (
-        <Line
-          key={segment.id}
-          points={segment.points.map((point) => [point.x, point.y, point.z - (predicted ? point.predictedSag : 0)] as [number, number, number])}
-          color={segment.family === 'continuous-base' ? '#70878c' : predicted ? '#e8edf0' : SUPPORT_COLORS[segment.supportState]}
-          lineWidth={predicted ? 1.05 : 0.75}
-          transparent
-          opacity={0.96}
-        />
-      ))}
-    </group>
+    <Line
+      points={points}
+      color={predicted ? '#e8edf0' : SUPPORT_COLORS.bridge}
+      lineWidth={predicted ? 1.05 : 0.75}
+      transparent
+      opacity={0.96}
+    />
   )
 }
 
@@ -91,6 +92,18 @@ function AnchorPoints({ toolpath, timeline = 1 }: { toolpath: Toolpath; timeline
   return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#f4f6f6" size={1.35} sizeAttenuation transparent opacity={0.95} /></points>
 }
 
+function DepositedMaterial({ points }: { points: Toolpath['orderedPoints'] }) {
+  const positions = useMemo(
+    () => new Float32Array(points.flatMap((point) => [point.x, point.y, point.z - point.predictedSag])),
+    [points],
+  )
+  if (points.length < 2) return null
+  return <group>
+    <Line points={points.map((point) => [point.x, point.y, point.z - point.predictedSag] as [number, number, number])} color="#cbd5d7" lineWidth={1.2} />
+    <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry><pointsMaterial color="#edf2f3" size={0.48} sizeAttenuation transparent opacity={0.78} /></points>
+  </group>
+}
+
 function Simulation({ toolpath, timeline }: { toolpath: Toolpath; timeline: number }) {
   const extrusionPoints = useMemo(
     () => toolpath.orderedPoints.filter((point) => point.segmentType === 'extrusion'),
@@ -99,24 +112,12 @@ function Simulation({ toolpath, timeline }: { toolpath: Toolpath; timeline: numb
   const visibleCount = Math.max(1, Math.floor(extrusionPoints.length * timeline))
   const activePoint = extrusionPoints[Math.min(visibleCount - 1, extrusionPoints.length - 1)]
   const hotTail = extrusionPoints.slice(Math.max(0, visibleCount - 90), visibleCount)
-  let traversed = 0
+  const deposited = extrusionPoints.slice(0, visibleCount)
 
   return (
     <group>
       <AnchorPoints toolpath={toolpath} timeline={timeline} />
-      {toolpath.segments.map((segment) => {
-        const localCount = Math.max(0, Math.min(segment.points.length, visibleCount - traversed))
-        traversed += segment.points.length
-        if (localCount < 2) return null
-        return (
-          <Line
-            key={segment.id}
-            points={segment.points.slice(0, localCount).map((point) => [point.x, point.y, point.z - point.predictedSag] as [number, number, number])}
-            color={segment.family === 'continuous-base' ? '#6b777a' : '#cbd5d7'}
-            lineWidth={1.05}
-          />
-        )
-      })}
+      <DepositedMaterial points={deposited} />
       {hotTail.length > 1 && <Line points={hotTail.map((point) => [point.x, point.y, point.z - point.predictedSag] as [number, number, number])} color="#ff9d4d" lineWidth={2.1} />}
       {activePoint && (
         <group position={[activePoint.x, activePoint.y, activePoint.z + 7]}>
